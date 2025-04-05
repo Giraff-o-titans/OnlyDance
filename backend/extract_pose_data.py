@@ -65,7 +65,7 @@ def main():
                     output.append(
                         {
                             "frame": frame_number,
-                            "timestamp": round(frame_number / fps, 2),
+                            "timestamp": round(frame_number / fps, 3),
                             "landmarks": landmarks,
                         }
                     )
