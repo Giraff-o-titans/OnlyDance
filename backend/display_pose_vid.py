@@ -21,7 +21,7 @@ def get_coords(landmarks, idx, shape):
     return int(lm.x * shape[1]), int(lm.y * shape[0])
 
 # Open video
-video_path = "assets/deadpool.mp4"
+video_path = "assets/deadpool_cut.mp4"
 cap = cv2.VideoCapture(video_path)
 
 if not cap.isOpened():
