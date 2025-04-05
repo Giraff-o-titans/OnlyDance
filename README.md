@@ -1,12 +1,9 @@
 # OnlyDance
 
-To run the backend server, you need to create a virtual environment first using
+## Running the backend scripts
 
-```bash
-python -m venv venv
-```
+To run the backend server, you need to activate the environment using
 
-You can now activate the environment using
  - On Mac/Linux:
 
 ```bash
@@ -30,3 +27,7 @@ To save any new dependencies, you can run
 ```
 pip freeze > requirements.txt
 ```
+
+## Running the frontend
+
+Simply run `npm install` and `npm run dev` to run the frontend in development mode.
