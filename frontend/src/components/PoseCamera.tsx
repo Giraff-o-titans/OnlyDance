@@ -66,22 +66,20 @@ export default function PoseCamera() {
             await pose.send({ image: videoRef.current });
           }
         },
-        width: 480,
-        height: 640,
       });
       camera.start();
     }
   }, []);
 
   return (
-    <div style={{ position: "relative" }} className="h-screen">
+    <div style={{ position: "relative" }}>
       <video ref={videoRef} style={{ display: "none" }} />
       <canvas
         ref={canvasRef}
-        width={480}
-        height={640}
         style={{ position: "absolute", top: 0, left: 0 }}
-        className="h-screen"
+        width={640}
+        height={480}
+        className="w-[50vw]"
       />
     </div>
   );

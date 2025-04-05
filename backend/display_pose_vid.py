@@ -93,8 +93,8 @@ while True:
         break
 
 # Save the angles to a JSON file
-with open('angles.json', 'w') as f:
-    json.dump(all_angles, f, indent=4)
+# with open('../data/pose_data.json', 'w') as f:
+#     json.dump(all_angles, f, indent=4)
 
 # Clean up
 cap.release()

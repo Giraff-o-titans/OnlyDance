@@ -16,7 +16,7 @@ export default function Scene() {
   }, []);
 
   return (
-    <Canvas camera={{ position: [0, 10, 50], fov: 30 }}>
+    <Canvas camera={{ position: [0, 0, 2], fov: 60 }}>
       <ambientLight intensity={1} />
       <Model pose={poses[frame]} />
       <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />

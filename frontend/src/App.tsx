@@ -3,8 +3,8 @@ import Scene from "./components/Scene";
 
 function App() {
   return (
-    <div className="h-screen flex flex">
-      <div className="w-1/2">
+    <div className="h-screen flex">
+      <div className="w-[50vw] h-[calc(3/4*50vw)]">
         <Scene />
       </div>
       <PoseCamera />
