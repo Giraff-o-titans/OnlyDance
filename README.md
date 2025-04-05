@@ -19,11 +19,10 @@ venv/bin/activate
 venv\Scripts\activate
 ```
 
-Now you need to install our backend dependencies before running our backend server using
+Now you need to install your backend dependencies before running your backend server using
 
 ```
 pip install -r requirements.txt
-python app.py
 ```
 
 To save any new dependencies, you can run
