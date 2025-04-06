@@ -540,6 +540,7 @@ Your task is:
 Specifically:
 - For this joint, give **clear, specific, and actionable advice** on how the user can adjust their body position to better match the expected pose.
 - The feedback should be **one short, simple sentence**.
+- Ensure the feedback is friendly and encouraging, suitable for a dance teaching app.
 
 Do not include any additional explanation or preamble outside this format.
 """
