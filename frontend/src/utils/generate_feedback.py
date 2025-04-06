@@ -31,12 +31,7 @@ The cross product is represented as a numpy array.
 Based on the values of this one frame, give feedback to the user on how to improve
 their dance performance. The feedback should be specific to the body part
 being compared and should suggest specific actions the user can take to improve
-their performance. For example, if the left wrist/left elbow joint has a large
-l2_norm, you might suggest that the user needs to move their left wrist closer
-to their left elbow. If the angle between the expected and actual positions
-is large, you might suggest that the user needs to straighten their arm more.
-If the cross product is large, you might suggest that the user needs to
-adjust their posture or alignment to improve their performance. The feedback
+their performance. The feedback
 should be clear and easy to understand, and should provide specific
 recommendations for how the user can improve their performance. The feedback
 should be tailored to the specific body part being compared, and should
@@ -48,9 +43,9 @@ that require attention, limit the feedback to the top 3 body parts that require
 the most attention. Keep the format exactly like this, don't include any other
 text outside of this format:
 
-1.  **Left Wrist to Left Elbow:** Your left arm is slightly extended, try bringing your left wrist in closer to your left elbow.
-2.  **Right Wrist to Right Elbow:** Your right arm needs to be adjusted to be closer to your body, try adjusting your posture and moving your right wrist closer to your right elbow.
-3.  **Right Knee to Right Ankle:** Your right leg needs some adjustment, try straightening your leg more to improve your alignment.
+1.  [Joint 1]: [Feedback for Joint 1]
+2.  [Joint 2]: [Feedback for Joint 2]
+3.  [Joint 3]: [Feedback for Joint 3]
 """
 
 response = model.generate_content(prompt)
