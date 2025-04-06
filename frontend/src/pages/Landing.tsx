@@ -17,7 +17,7 @@ import deadpool from "../../../data/deadpool.json";
 
 const Landing = () => {
   const [selectedDance, setSelectedDance] = useState<string | undefined>(undefined);
-  const { setPoseData } = useStore();
+  const { poseData, setPoseData } = useStore();
   const navigate = useNavigate();
   const runApp = useDriver();
 
@@ -28,8 +28,15 @@ const Landing = () => {
   const handleStart = () => {
     if (!selectedDance) return toast.error("Please select a dance first!");
     setPoseData(poseDataMap[selectedDance]);
-    navigate("/app");
-    runApp();
+
+    setTimeout(() => {
+      if (poseData && poseData.length > 0) {
+        runApp(); // Call runApp once poseData is updated
+        navigate("/app");
+      } else {
+        toast.error("Pose data is not loaded correctly.");
+      }
+    }, 100); // This gives time for the state update
   };
 
   return (

@@ -38,21 +38,10 @@ export function useDriver() {
     });
   };
 
-  const clearText = async (timeMS: number) => {
-    return new Promise((res) =>
-      setTimeout(() => {
-        setCenterText("");
-        res(true);
-      }, timeMS)
-    );
-  };
-
   const scoreUser = async () => {
     setCenterText("Your Turn");
-    await clearText(1000);
     const score = await collectAndScore((4 * 60 * 1000) / BPM, 0);
     setCenterText("Score: " + score.toFixed(2));
-    await clearText(1000);
     return score;
   };
 
