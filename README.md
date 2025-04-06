@@ -11,3 +11,5 @@ Now you can run your backend server using ```uvicorn app:app --reload```.
 ## Running the frontend
 
 Simply run `npm install` and `npm run dev` to run the frontend in development mode.
+
+## Refer to [scoring.ipynb](scoring.ipynb) to find documentation and a walkthrough for the feature engineering, scoring model, and timestamp interpolation.
