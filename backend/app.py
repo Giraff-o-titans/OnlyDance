@@ -2,10 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict
-import pandas as pd
-import json
 import numpy as np
-import matplotlib.pyplot as plt
 import copy
 
 # Define the PoseType
@@ -58,17 +55,17 @@ REL_VEC_TUPS = (
 
 def lin_interpolate_frames(frame1, frame2, timestamp):
     output = {}
-    output["timestamp"] = timestamp
+    output.timestamp = timestamp
     output_landmarks = {}
     landmarks = [f"{side}_{bodypart}" for side in ["LEFT", "RIGHT"] for bodypart in ["WRIST", "ELBOW", "SHOULDER", "HIP", "KNEE", "ANKLE"]]
-    fraction = (timestamp - frame1["timestamp"]) / (frame2["timestamp"] - frame1["timestamp"])
+    fraction = (timestamp - frame1.timestamp) / (frame2.timestamp - frame1.timestamp)
     for landmark in landmarks:
         output_landmarks[landmark] = [
-            frame1["landmarks"][landmark][0] + fraction * (frame2["landmarks"][landmark][0] - frame1["landmarks"][landmark][0]),
-            frame1["landmarks"][landmark][1] + fraction * (frame2["landmarks"][landmark][1] - frame1["landmarks"][landmark][1]),
-            frame1["landmarks"][landmark][2] + fraction * (frame2["landmarks"][landmark][2] - frame1["landmarks"][landmark][2])
+            frame1.landmarks[landmark][0] + fraction * (frame2.landmarks[landmark][0] - frame1.landmarks[landmark][0]),
+            frame1.landmarks[landmark][1] + fraction * (frame2.landmarks[landmark][1] - frame1.landmarks[landmark][1]),
+            frame1.landmarks[landmark][2] + fraction * (frame2.landmarks[landmark][2] - frame1.landmarks[landmark][2])
         ]
-    output['landmarks'] = output_landmarks
+    output.landmarks = output_landmarks
     return output
 
 def fill_values(template_pose_data, user_pose_data):
@@ -83,8 +80,8 @@ def fill_values(template_pose_data, user_pose_data):
     user_orig_timestamps = set()
     while True:
         try:
-            curr_temp = template_pose_data[temp_pointer]["timestamp"]
-            curr_user = user_pose_data[user_pointer]["timestamp"]
+            curr_temp = template_pose_data[temp_pointer].timestamp
+            curr_user = user_pose_data[user_pointer].timestamp
         except:
             break
 
@@ -137,12 +134,12 @@ def fill_values(template_pose_data, user_pose_data):
 
 2
 def find_normalized_relative_vec_from_obj(from_landmark, to_landmark, frame_obj):
-    fromx = frame_obj["landmarks"][from_landmark][0]
-    fromy = frame_obj["landmarks"][from_landmark][1]
-    fromz = frame_obj["landmarks"][from_landmark][2]
-    tox = frame_obj["landmarks"][to_landmark][0]
-    toy = frame_obj["landmarks"][to_landmark][1]
-    toz = frame_obj["landmarks"][to_landmark][2]
+    fromx = frame_obj.landmarks[from_landmark][0]
+    fromy = frame_obj.landmarks[from_landmark][1]
+    fromz = frame_obj.landmarks[from_landmark][2]
+    tox = frame_obj.landmarks[to_landmark][0]
+    toy = frame_obj.landmarks[to_landmark][1]
+    toz = frame_obj.landmarks[to_landmark][2]
     relative_vec = [tox - fromx, toy-fromy, toz-fromz]
     relative_vec_norm = np.sqrt((relative_vec[0])**2 + (relative_vec[1])**2 + (relative_vec[2])**2)
     return [relative_vec[0] / relative_vec_norm, relative_vec[1] / relative_vec_norm,relative_vec[2] / relative_vec_norm]
@@ -150,13 +147,13 @@ def find_normalized_relative_vec_from_obj(from_landmark, to_landmark, frame_obj)
 
 def find_normalized_relative_vec(from_landmark, to_landmark, frame, pose_data):
     # prob best not to use this function, uses frames which wont work with interpolated values
-    frame_obj = pose_data[frame - pose_data[0]["frame"]]
-    fromx = frame_obj["landmarks"][from_landmark][0]
-    fromy = frame_obj["landmarks"][from_landmark][1]
-    fromz = frame_obj["landmarks"][from_landmark][2]
-    tox = frame_obj["landmarks"][to_landmark][0]
-    toy = frame_obj["landmarks"][to_landmark][1]
-    toz = frame_obj["landmarks"][to_landmark][2]
+    frame_obj = pose_data[frame - pose_data[0].frame]
+    fromx = frame_obj.landmarks[from_landmark][0]
+    fromy = frame_obj.landmarks[from_landmark][1]
+    fromz = frame_obj.landmarks[from_landmark][2]
+    tox = frame_obj.landmarks[to_landmark][0]
+    toy = frame_obj.landmarks[to_landmark][1]
+    toz = frame_obj.landmarks[to_landmark][2]
     relative_vec = [tox - fromx, toy-fromy, toz-fromz]
     relative_vec_norm = np.sqrt((relative_vec[0])**2 + (relative_vec[1])**2 + (relative_vec[2])**2)
     return [relative_vec[0] / relative_vec_norm, relative_vec[1] / relative_vec_norm,relative_vec[2] / relative_vec_norm]
@@ -171,7 +168,7 @@ def find_weights(pose_data):
 
         for i in range(1, len(pose_data)):
             first_normed_rel_vec = find_normalized_relative_vec_from_obj(from_joint, to_joint, pose_data[i-1])
-            second_normed_rel_vec = find_normalized_relative_vec(from_joint, to_joint, pose_data[i])
+            second_normed_rel_vec = find_normalized_relative_vec_from_obj(from_joint, to_joint, pose_data[i])
             diff_norm = np.linalg.norm(np.array(second_normed_rel_vec) - np.array(first_normed_rel_vec))
             diffs.append(diff_norm)
 
@@ -192,7 +189,7 @@ def calculate_vectors(expected, actual):
 
     return exp_and_actual_vec
 
-#calculate_vectors(pose_data[0]['landmarks'], pose_data[100]['landmarks'])
+#calculate_vectors(pose_data[0].landmarks, pose_data[100].landmarks)
 
 # expected_frames: list of dictionaries of lists
 
@@ -238,32 +235,32 @@ def calculate_grade_for_groups(expected_movements, actual_movements):
     for i in range(len(expected_movements), len(actual_movements)):
         rang = (i-len(expected_movements), i)
         interpolated_data = fill_values(expected_movements, actual_movements[rang[0]:rang[1]])
-        needed_expected_movements = [data['landmarks'] for data in interpolated_data[0]]
-        needed_actual_movements = [data['landmarks'] for data in interpolated_data[1]]
+        needed_expected_movements = [data.landmarks for data in interpolated_data[0]]
+        needed_actual_movements = [data.landmarks for data in interpolated_data[1]]
         grade = calculate_norm(needed_expected_movements, needed_actual_movements, weights)
         grade_per_timestamp_group[rang] = grade
 
     return grade_per_timestamp_group
 
 def calculate_grade_for_groups2(expected_movements, actual_movements):
-    
+    print(len(expected_movements), len(actual_movements))
     weights = [softmax(x) for x in find_weights(expected_movements)]
     grade_per_timestamp_group = {}
 
     for i in range(len(expected_movements), len(actual_movements)):
         rang = (i-len(expected_movements), i)
         actual_movements_new_timestamps = copy.deepcopy(actual_movements[rang[0]:rang[1]])
-        first_time = actual_movements_new_timestamps[0]['timestamp']
+        first_time = actual_movements_new_timestamps[0].timestamp
         
         for j in range(0, len(actual_movements_new_timestamps)):
-            actual_movements_new_timestamps[j]['timestamp'] = actual_movements_new_timestamps[j]['timestamp'] - first_time
+            actual_movements_new_timestamps[j].timestamp = actual_movements_new_timestamps[j].timestamp - first_time
 
         if i == len(expected_movements):
             print(actual_movements_new_timestamps)
         
         interpolated_data = fill_values(expected_movements, actual_movements_new_timestamps)
-        needed_expected_movements = [data['landmarks'] for data in interpolated_data[0]]
-        needed_actual_movements = [data['landmarks'] for data in interpolated_data[1]]
+        needed_expected_movements = [data.landmarks for data in interpolated_data[0]]
+        needed_actual_movements = [data.landmarks for data in interpolated_data[1]]
         grade = calculate_norm(needed_expected_movements, needed_actual_movements, weights)
         grade_per_timestamp_group[rang] = grade
 
@@ -272,7 +269,6 @@ def calculate_grade_for_groups2(expected_movements, actual_movements):
 ### SCORE FUNCTION
 
 def calculate_highest_grade(expected_movements, actual_movements):
-
     return max(list(calculate_grade_for_groups2(expected_movements, actual_movements).values()))
 
 #calculate_highest_grade(pose_data[0:12], pose_data[0:48])
@@ -285,9 +281,9 @@ def calculate_highest_vectors(expected_movements, actual_movements):
     best_range_with_val = max(calculate_grade_for_groups(expected_movements, actual_movements).items(),key = lambda x: x[1])
     best_range = best_range_with_val[0]
     desired_actual = actual_movements[best_range[0]:best_range[1]]
-    curr_dict = calculate_vectors(expected_movements[0]['landmarks'], desired_actual[0]['landmarks'])
+    curr_dict = calculate_vectors(expected_movements[0].landmarks, desired_actual[0].landmarks)
     for i in range(1,len(expected_movements)):
-        dct = calculate_vectors(expected_movements[i]['landmarks'], desired_actual[i]['landmarks'])
+        dct = calculate_vectors(expected_movements[i].landmarks, desired_actual[i].landmarks)
         for key, value in dct.items():
             curr_dict[key].append(value[0])
     return curr_dict
