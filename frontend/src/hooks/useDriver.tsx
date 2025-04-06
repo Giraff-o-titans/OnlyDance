@@ -32,10 +32,10 @@ export function useDriver() {
       setCollect(true);
       setTimeout(() => {
         setCollect(false);
-        console.log(userPoseRef.current);
-
+        
         const start = Math.round(startFrame + measure * FPM);
         const end = Math.min(numFrames, Math.round(start + FPM));
+        console.log(userPoseRef.current);
 
         http({
           url: "/score",
@@ -47,10 +47,10 @@ export function useDriver() {
     });
   };
 
-  const scoreUser = async (start: number, end: number, measure: number) => {
+  const scoreUser = async (measure: number) => {
     setCenterText("Your Turn");
-    playAudio(start, end);
-    const score = await collectAndScore((4 * 60 * 1000) / BPM, 0);
+    // playAudio(start, end);
+    const score = await collectAndScore(3 * (4 * 60 * 1000) / BPM, 0);
     setScorePoints((prev) => [...prev, { measure, score }]);
     setCenterText("Score: " + score.toFixed(2));
     return score;
@@ -103,9 +103,9 @@ export function useDriver() {
       do {
         start = Math.round(startFrame + measure * FPM);
         end = Math.min(numFrames, Math.round(start + FPM));
-        
+        playAudio(start, end);
         await playFrames(start, end);
-      } while ((await scoreUser(start, end, measure)) < SCORE_THRESHOLD);
+      } while ((await scoreUser(measure)) < SCORE_THRESHOLD);
     }
   };
 
