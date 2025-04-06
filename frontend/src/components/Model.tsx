@@ -4,7 +4,7 @@ import { useStore } from "../hooks/useStore";
 
 const Model = () => {
   const { frame, poseData } = useStore();
-  const pose = poseData[frame];
+  const pose = poseData.poses[frame];
   type LandmarkKey = keyof typeof pose["landmarks"];
   const getPoint = (idx: LandmarkKey) => new Vector3(...pose.landmarks[idx]);
   

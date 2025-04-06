@@ -3,3 +3,8 @@ export type PoseType = {
   timestamp: number;
   landmarks: Record<string, number[]>;
 };
+
+export type PoseData = {
+  poses: PoseType[];
+  audio: string;
+};
