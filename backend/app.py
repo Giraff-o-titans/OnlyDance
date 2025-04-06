@@ -2,7 +2,11 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict
+import pandas as pd
+import json
 import numpy as np
+import matplotlib.pyplot as plt
+import copy
 
 # Define the PoseType
 class PoseType(BaseModel):
@@ -35,7 +39,7 @@ def score(request: ScoreRequest):
     actual = request.actual
     expected = request.expected
     
-    return {"score": np.random.uniform() * 100}
+    return {"score": calculate_highest_grade(expected, actual)}
 
 REL_VEC_TUPS = (
         ("LEFT_WRIST", "LEFT_ELBOW"),
@@ -131,7 +135,7 @@ def fill_values(template_pose_data, user_pose_data):
 
     return temp_out, user_out
 
-
+2
 def find_normalized_relative_vec_from_obj(from_landmark, to_landmark, frame_obj):
     fromx = frame_obj["landmarks"][from_landmark][0]
     fromy = frame_obj["landmarks"][from_landmark][1]
@@ -241,11 +245,35 @@ def calculate_grade_for_groups(expected_movements, actual_movements):
 
     return grade_per_timestamp_group
 
+def calculate_grade_for_groups2(expected_movements, actual_movements):
+    
+    weights = [softmax(x) for x in find_weights(expected_movements)]
+    grade_per_timestamp_group = {}
+
+    for i in range(len(expected_movements), len(actual_movements)):
+        rang = (i-len(expected_movements), i)
+        actual_movements_new_timestamps = copy.deepcopy(actual_movements[rang[0]:rang[1]])
+        first_time = actual_movements_new_timestamps[0]['timestamp']
+        
+        for j in range(0, len(actual_movements_new_timestamps)):
+            actual_movements_new_timestamps[j]['timestamp'] = actual_movements_new_timestamps[j]['timestamp'] - first_time
+
+        if i == len(expected_movements):
+            print(actual_movements_new_timestamps)
+        
+        interpolated_data = fill_values(expected_movements, actual_movements_new_timestamps)
+        needed_expected_movements = [data['landmarks'] for data in interpolated_data[0]]
+        needed_actual_movements = [data['landmarks'] for data in interpolated_data[1]]
+        grade = calculate_norm(needed_expected_movements, needed_actual_movements, weights)
+        grade_per_timestamp_group[rang] = grade
+
+    return grade_per_timestamp_group
+
 ### SCORE FUNCTION
 
 def calculate_highest_grade(expected_movements, actual_movements):
 
-    return max(list(calculate_grade_for_groups(expected_movements, actual_movements).values()))
+    return max(list(calculate_grade_for_groups2(expected_movements, actual_movements).values()))
 
 #calculate_highest_grade(pose_data[0:12], pose_data[0:48])
 
