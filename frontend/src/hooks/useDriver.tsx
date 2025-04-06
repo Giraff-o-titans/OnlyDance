@@ -1,13 +1,15 @@
 import { useStore } from "./useStore";
-import { score } from "../utils/functions";
 import { useRef, useEffect } from "react";
 import audio from "../assets/deadpool_audio.mp3";
+import useHTTP from "./useHTTP";
+import { data } from "react-router-dom";
 
 export function useDriver() {
   const BPM = 86.3;
   const FPS = 30;
   const startFrame = 0;
   const FPM = (60 * 30 * 4) / BPM;
+  const { http } = useHTTP();
   const audioRef = useRef(new Audio(audio));
   const { poseData, setFrame, setCenterText } = useStore();
   let numFrames = poseData?.[poseData.length - 1]?.frame ?? 0;
@@ -29,11 +31,17 @@ export function useDriver() {
       setCollect(true);
       setTimeout(() => {
         setCollect(false);
-        console.log(userPoseRef.current);
+        // console.log(userPoseRef.current);
 
         const start = Math.round(startFrame + measure * FPM);
         const end = Math.min(numFrames, Math.round(start + FPM));
-        resolve(score(userPoseRef.current, poseData.slice(start, end)));
+
+        http({
+          url: "/score",
+          method: "POST",
+          body: { actual: userPoseRef.current, expected: poseData.slice(start, end) },
+          handleData: (data) => resolve(data.score),
+        });
       }, timeMS);
     });
   };
