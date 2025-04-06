@@ -2,6 +2,7 @@ import { useStore } from "./useStore";
 import { useRef, useEffect } from "react";
 import useHTTP from "./useHTTP";
 import { sleep } from "@/utils/functions";
+import { SCORE_THRESHOLD } from "@/utils/types";
 
 export function useDriver() {
   const BPM = 86.3;
@@ -10,7 +11,7 @@ export function useDriver() {
   const FPM = (60 * 30 * 4) / BPM;
   const { http } = useHTTP();
   const audioRef = useRef<HTMLAudioElement>(null);
-  const { poseData, setFrame, setCenterText } = useStore();
+  const { poseData, setFrame, setCenterText, setScorePoints } = useStore();
   let numFrames = 0;
 
   const { setCollect, setUserPose, userPoseRef } = useStore();
@@ -46,10 +47,11 @@ export function useDriver() {
     });
   };
 
-  const scoreUser = async (start: number, end: number) => {
+  const scoreUser = async (start: number, end: number, measure: number) => {
     setCenterText("Your Turn");
     playAudio(start, end);
     const score = await collectAndScore((4 * 60 * 1000) / BPM, 0);
+    setScorePoints((prev) => [...prev, { measure, score }]);
     setCenterText("Score: " + score.toFixed(2));
     return score;
   };
@@ -103,7 +105,7 @@ export function useDriver() {
         end = Math.min(numFrames, Math.round(start + FPM));
         
         await playFrames(start, end);
-      } while ((await scoreUser(start, end)) < 50);
+      } while ((await scoreUser(start, end, measure)) < SCORE_THRESHOLD);
     }
   };
 
