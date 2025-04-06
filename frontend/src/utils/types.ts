@@ -4,9 +4,10 @@ export type PoseType = {
   landmarks: Record<string, number[]>;
 };
 
-export type PoseData = {
+export type Dance = {
   poses: PoseType[];
   audio: string;
+  bpm: number;
 };
 
 export type ScorePoint = {
@@ -14,4 +15,4 @@ export type ScorePoint = {
   score: number;
 }
 
-export const SCORE_THRESHOLD = 50;
+export const SCORE_THRESHOLD = 75;

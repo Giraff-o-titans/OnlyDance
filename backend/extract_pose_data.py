@@ -2,8 +2,8 @@ import cv2
 import mediapipe as mp
 import json
 
-VIDEO_PATH = "assets/deadpool_cut.mp4"
-OUTPUT_JSON = "../data/pose_data.json"
+VIDEO_PATH = "assets/APT_cut.mp4"
+OUTPUT_JSON = "../data/APT.json"
 FRAME_INTERVAL = 1  # Process every 5th frame
 
 mp_pose = mp.solutions.pose

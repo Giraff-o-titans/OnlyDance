@@ -15,7 +15,7 @@ function App() {
         <PoseCamera />
       </div>
       <div className="flex items-center">
-        <span className="flex-1 text-[5vw] z-50 text-center mario text-red-500 drop-shadow-[3px_3px_0_#000] font-bold">
+        <span className="flex-1 text-[7vw] z-50 text-center mario text-red-500 drop-shadow-[3px_3px_0_#000] font-bold">
           {centerText}
         </span>
         <ScatterPlot />

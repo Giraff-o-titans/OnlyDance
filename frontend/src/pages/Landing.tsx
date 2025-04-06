@@ -11,32 +11,40 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useStore } from "@/hooks/useStore";
-import { PoseData, PoseType } from "@/utils/types";
+import { Dance, PoseType } from "@/utils/types";
 import useHTTP from "@/hooks/useHTTP";
 
 import deadpool from "../../../data/deadpool.json";
 import deadpoolAudio from "../assets/deadpool_audio.mp3";
+import APT from "../../../data/APT.json";
+import APTAudio from "../assets/APT_audio.mp3";
 
 const Landing = () => {
   const [selectedDance, setSelectedDance] = useState<string | undefined>(undefined);
-  const { poseData, setPoseData } = useStore();
+  const { poseData, setDance } = useStore();
   const navigate = useNavigate();
   const runApp = useDriver();
   const { http } = useHTTP();
 
-  const poseDataMap: Record<string, PoseData> = {
+  const poseDataMap: Record<string, Dance> = {
     deadpool: {
       poses: deadpool as PoseType[],
-      audio: deadpoolAudio
-    }
+      audio: deadpoolAudio,
+      bpm: 86.3,
+    },
+    APT: {
+      poses: APT as PoseType[],
+      audio: APTAudio,
+      bpm: 74.5,
+    },
   };
 
   const handleStart = async () => {
     const ok = await http({ url: "/health", method: "GET" });
     if (!ok) return toast.error("Server is not running!");
-    
+
     if (!selectedDance) return toast.error("Please select a dance first!");
-    setPoseData(poseDataMap[selectedDance]);
+    setDance(poseDataMap[selectedDance]);
 
     setTimeout(() => {
       if (poseData && poseData.poses && poseData.poses.length > 0) {
@@ -60,6 +68,7 @@ const Landing = () => {
         </SelectTrigger>
         <SelectContent className="bg-white text-black shadow-md rounded-md">
           <SelectItem value="deadpool">Bye Bye Bye</SelectItem>
+          <SelectItem value="APT">APT</SelectItem>
         </SelectContent>
       </Select>
       <Button

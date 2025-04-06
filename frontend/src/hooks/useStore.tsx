@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { createSetter } from "../utils/functions";
-import { PoseData, PoseType, ScorePoint } from "../utils/types";
+import { Dance, PoseType, ScorePoint } from "../utils/types";
 
 const userPoseRef = { current: [] as PoseType[] };
 
@@ -9,7 +9,7 @@ interface StoreType {
   frame: number;
   collect: boolean;
   centerText: string;
-  poseData: PoseData;
+  poseData: Dance;
   userPose: PoseType[];
   scorePoints: ScorePoint[];
   userPoseRef: typeof userPoseRef;
@@ -17,7 +17,7 @@ interface StoreType {
   setFrame: (frame: number | ((prev: number) => number)) => void;
   setCenterText: (text: string | ((prev: string) => string)) => void;
   setCollect: (collect: boolean | ((prev: boolean) => boolean)) => void;
-  setPoseData: (pose: PoseData | ((prev: PoseData) => PoseData)) => void;
+  setDance: (pose: Dance | ((prev: Dance) => Dance)) => void;
   setUserPose: (pose: PoseType[] | ((prev: PoseType[]) => PoseType[])) => void;
   setScorePoints: (points: ScorePoint[] | ((prev: ScorePoint[]) => ScorePoint[])) => void;
 }
@@ -30,7 +30,7 @@ export const useStore = create<StoreType>((set, get) => ({
   centerText: "",
   collect: false,
   scorePoints: [],
-  poseData: {} as PoseData,
+  poseData: {} as Dance,
   setScore: createSetter<StoreType>(set)("score"),
   setFrame: createSetter<StoreType>(set)("frame"),
   setCollect: createSetter<StoreType>(set)("collect"),
@@ -39,7 +39,7 @@ export const useStore = create<StoreType>((set, get) => ({
     userPoseRef.current = newValue; // 💥 keep ref updated
     set({ userPose: newValue });
   },
-  setPoseData: createSetter<StoreType>(set)("poseData"),
+  setDance: createSetter<StoreType>(set)("poseData"),
   setCenterText: createSetter<StoreType>(set)("centerText"),
   setScorePoints: createSetter<StoreType>(set)("scorePoints"),
 }));

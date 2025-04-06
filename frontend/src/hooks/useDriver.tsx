@@ -5,24 +5,30 @@ import { sleep } from "@/utils/functions";
 import { SCORE_THRESHOLD } from "@/utils/types";
 
 export function useDriver() {
-  const BPM = 86.3;
+  let numFrames = 0;
+  let BPM = 0; // beats per minute
+  let FPM = 0; // frames per measure
+
   const FPS = 30;
   const startFrame = 0;
-  const FPM = (60 * 30 * 4) / BPM;
   const { http } = useHTTP();
   const audioRef = useRef<HTMLAudioElement>(null);
   const { poseData, setFrame, setCenterText, setScorePoints } = useStore();
-  let numFrames = 0;
 
   const { setCollect, setUserPose, userPoseRef } = useStore();
 
   useEffect(() => {
+    if (!poseData) return;
+
+    BPM = poseData.bpm;
+    FPM = (60 * 30 * 4) / BPM;
+
     if (poseData?.poses && poseData.poses.length > 0) {
       numFrames = poseData.poses[poseData.poses.length - 1].frame;
     } else {
       numFrames = 0;
     }
-  
+
     audioRef.current = poseData?.audio ? new Audio(poseData.audio) : null;
   }, [poseData]);
 
@@ -32,7 +38,7 @@ export function useDriver() {
       setCollect(true);
       setTimeout(() => {
         setCollect(false);
-        
+
         const start = Math.round(startFrame + measure * FPM);
         const end = Math.min(numFrames, Math.round(start + FPM));
         console.log(userPoseRef.current);
@@ -40,7 +46,10 @@ export function useDriver() {
         http({
           url: "/score",
           method: "POST",
-          body: { actual: userPoseRef.current, expected: poseData.poses.slice(start, end) },
+          body: {
+            actual: userPoseRef.current,
+            expected: poseData.poses.slice(start, end).filter((_, i) => i % 2 === 0),
+          },
           handleData: (data) => resolve(data.score),
         });
       }, timeMS);
@@ -50,9 +59,9 @@ export function useDriver() {
   const scoreUser = async (measure: number) => {
     setCenterText("Your Turn");
     // playAudio(start, end);
-    const score = await collectAndScore(3 * (4 * 60 * 1000) / BPM, 0);
+    const score = await collectAndScore((2 * (4 * 60 * 1000)) / BPM, 0);
     setScorePoints((prev) => [...prev, { measure, score }]);
-    setCenterText("Score: " + score.toFixed(2));
+    setCenterText("Score: " + score.toFixed(2) + "\n" + (score > SCORE_THRESHOLD ? "Nice Job!" : "Try Again"));
     return score;
   };
 
