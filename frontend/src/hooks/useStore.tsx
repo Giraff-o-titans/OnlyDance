@@ -2,32 +2,40 @@ import { create } from "zustand";
 import { createSetter } from "../utils/functions";
 import { PoseData, PoseType } from "../utils/types";
 
+const userPoseRef = { current: [] as PoseType[] };
+
 interface StoreType {
   score: number;
   frame: number;
   collect: boolean;
   centerText: string;
-  userPose: PoseType[];
   poseData: PoseData;
+  userPose: PoseType[];
+  userPoseRef: typeof userPoseRef;
   setScore: (score: number | ((prev: number) => number)) => void;
   setFrame: (frame: number | ((prev: number) => number)) => void;
   setCenterText: (text: string | ((prev: string) => string)) => void;
   setCollect: (collect: boolean | ((prev: boolean) => boolean)) => void;
-  setUserPose: (pose: PoseType[] | ((prev: PoseType[]) => PoseType[])) => void;
   setPoseData: (pose: PoseData | ((prev: PoseData) => PoseData)) => void;
+  setUserPose: (pose: PoseType[] | ((prev: PoseType[]) => PoseType[])) => void;
 }
 
-export const useStore = create<StoreType>((set) => ({
+export const useStore = create<StoreType>((set, get) => ({
   score: 0,
   frame: 0,
   userPose: [],
+  userPoseRef,
   centerText: "",
   collect: false,
   poseData: {} as PoseData,
   setScore: createSetter<StoreType>(set)("score"),
   setFrame: createSetter<StoreType>(set)("frame"),
   setCollect: createSetter<StoreType>(set)("collect"),
-  setUserPose: createSetter<StoreType>(set)("userPose"),
+  setUserPose: (update) => {
+    const newValue = typeof update === "function" ? update(get().userPose) : update;
+    userPoseRef.current = newValue; // 💥 keep ref updated
+    set({ userPose: newValue });
+  },
   setPoseData: createSetter<StoreType>(set)("poseData"),
   setCenterText: createSetter<StoreType>(set)("centerText"),
 }));

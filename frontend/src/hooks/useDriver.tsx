@@ -13,12 +13,7 @@ export function useDriver() {
   const { poseData, setFrame, setCenterText } = useStore();
   let numFrames = 0;
 
-  const { setCollect, userPose, setUserPose } = useStore();
-  const userPoseRef = useRef(userPose);
-
-  useEffect(() => {
-    userPoseRef.current = userPose;
-  }, [userPose]);
+  const { setCollect, setUserPose, userPoseRef } = useStore();
 
   useEffect(() => {
     if (poseData?.poses && poseData.poses.length > 0) {
@@ -51,8 +46,9 @@ export function useDriver() {
     });
   };
 
-  const scoreUser = async () => {
+  const scoreUser = async (start: number, end: number) => {
     setCenterText("Your Turn");
+    playAudio(start, end);
     const score = await collectAndScore((4 * 60 * 1000) / BPM, 0);
     setCenterText("Score: " + score.toFixed(2));
     return score;
@@ -100,13 +96,14 @@ export function useDriver() {
     await sleep(500);
 
     for (let measure = 0; measure < Math.ceil(numFrames / FPM); measure++) {
+      let start = 0;
+      let end = 0;
       do {
-        const start = Math.round(startFrame + measure * FPM);
-        const end = Math.min(numFrames, Math.round(start + FPM));
+        start = Math.round(startFrame + measure * FPM);
+        end = Math.min(numFrames, Math.round(start + FPM));
         
-        playAudio(start, end);
         await playFrames(start, end);
-      } while ((await scoreUser()) < 50);
+      } while ((await scoreUser(start, end)) < 50);
     }
   };
 
