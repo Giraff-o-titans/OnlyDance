@@ -14,18 +14,23 @@ import { useStore } from "@/hooks/useStore";
 import { PoseType } from "@/utils/types";
 
 import deadpool from "../../../data/deadpool.json";
+import useHTTP from "@/hooks/useHTTP";
 
 const Landing = () => {
   const [selectedDance, setSelectedDance] = useState<string | undefined>(undefined);
   const { poseData, setPoseData } = useStore();
   const navigate = useNavigate();
   const runApp = useDriver();
+  const { http } = useHTTP();
 
   const poseDataMap: Record<string, PoseType[]> = {
     deadpool,
   };
 
-  const handleStart = () => {
+  const handleStart = async () => {
+    const ok = await http({ url: "/health", method: "GET" });
+    if (!ok) return toast.error("Server is not running!");
+    
     if (!selectedDance) return toast.error("Please select a dance first!");
     setPoseData(poseDataMap[selectedDance]);
 

@@ -1,4 +1,3 @@
-import { PoseType } from "./types";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -16,7 +15,3 @@ export const createSetter =
           ? (value as (prev: StoreType[T]) => StoreType[T])(state[key])
           : value,
     }));
-
-export const score = (actual: PoseType[], expected: PoseType[]) => {
-  return Math.random() * 100;
-}
