@@ -81,7 +81,6 @@ export function useCameraCapture() {
         ctx.fill();
       }
 
-      // ✅ use ref instead of captured collect
       if (collectRef.current && worldLandmarks) {
         const now = performance.now();
         if (startTime.current === null) startTime.current = now;
