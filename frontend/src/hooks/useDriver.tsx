@@ -1,7 +1,7 @@
 import { useStore } from "./useStore";
 import { useRef, useEffect } from "react";
-import audio from "../assets/deadpool_audio.mp3";
 import useHTTP from "./useHTTP";
+import { sleep } from "@/utils/functions";
 
 export function useDriver() {
   const BPM = 86.3;
@@ -9,9 +9,9 @@ export function useDriver() {
   const startFrame = 0;
   const FPM = (60 * 30 * 4) / BPM;
   const { http } = useHTTP();
-  const audioRef = useRef(new Audio(audio));
+  const audioRef = useRef<HTMLAudioElement>(null);
   const { poseData, setFrame, setCenterText } = useStore();
-  let numFrames = poseData?.[poseData.length - 1]?.frame ?? 0;
+  let numFrames = 0;
 
   const { setCollect, userPose, setUserPose } = useStore();
   const userPoseRef = useRef(userPose);
@@ -21,7 +21,13 @@ export function useDriver() {
   }, [userPose]);
 
   useEffect(() => {
-    numFrames = poseData?.[poseData.length - 1]?.frame ?? 0;
+    if (poseData?.poses && poseData.poses.length > 0) {
+      numFrames = poseData.poses[poseData.poses.length - 1].frame;
+    } else {
+      numFrames = 0;
+    }
+  
+    audioRef.current = poseData?.audio ? new Audio(poseData.audio) : null;
   }, [poseData]);
 
   const collectAndScore = async (timeMS: number, measure: number): Promise<number> => {
@@ -30,7 +36,7 @@ export function useDriver() {
       setCollect(true);
       setTimeout(() => {
         setCollect(false);
-        // console.log(userPoseRef.current);
+        console.log(userPoseRef.current);
 
         const start = Math.round(startFrame + measure * FPM);
         const end = Math.min(numFrames, Math.round(start + FPM));
@@ -38,7 +44,7 @@ export function useDriver() {
         http({
           url: "/score",
           method: "POST",
-          body: { actual: userPoseRef.current, expected: poseData.slice(start, end) },
+          body: { actual: userPoseRef.current, expected: poseData.poses.slice(start, end) },
           handleData: (data) => resolve(data.score),
         });
       }, timeMS);
@@ -59,6 +65,19 @@ export function useDriver() {
     }
   };
 
+  const playAudio = (startFrame: number, endFrame: number) => {
+    if (!audioRef.current) return;
+    const poses = poseData.poses;
+    const startTime = poses[poses.findIndex((p) => p.frame === startFrame)].timestamp;
+    const endTime = poses[poses.findIndex((p) => p.frame === endFrame)].timestamp;
+
+    audioRef.current.currentTime = startTime;
+    audioRef.current.play();
+    setTimeout(() => {
+      audioRef.current?.pause();
+    }, (endTime - startTime) * 1000);
+  };
+
   const countdown = async (seconds: number) => {
     return new Promise<void>((resolve) => {
       let count = seconds;
@@ -67,7 +86,7 @@ export function useDriver() {
       const interval = setInterval(() => {
         setCenterText((--count).toString());
 
-        if (count < 0) {
+        if (count <= 0) {
           clearInterval(interval);
           setCenterText("");
           resolve();
@@ -78,22 +97,14 @@ export function useDriver() {
 
   const runApp = async () => {
     await countdown(3);
-    await new Promise((res) => setTimeout(res, 500));
+    await sleep(500);
 
     for (let measure = 0; measure < Math.ceil(numFrames / FPM); measure++) {
       do {
         const start = Math.round(startFrame + measure * FPM);
         const end = Math.min(numFrames, Math.round(start + FPM));
-        // const startTime = poses[poses.findIndex((p) => p.frame === start)].timestamp;
-        // const endTime = poses[poses.findIndex((p) => p.frame === end)].timestamp;
-
-        // if (!audioRef.current) return;
-        // audioRef.current.currentTime = startTime;
-        // audioRef.current.play();
-        // setTimeout(() => {
-        //   audioRef.current.pause();
-        // }, (endTime - startTime) * 1000);
-
+        
+        playAudio(start, end);
         await playFrames(start, end);
       } while ((await scoreUser()) < 50);
     }

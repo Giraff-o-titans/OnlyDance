@@ -11,10 +11,11 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useStore } from "@/hooks/useStore";
-import { PoseType } from "@/utils/types";
+import { PoseData, PoseType } from "@/utils/types";
+import useHTTP from "@/hooks/useHTTP";
 
 import deadpool from "../../../data/deadpool.json";
-import useHTTP from "@/hooks/useHTTP";
+import deadpoolAudio from "../assets/deadpool_audio.mp3";
 
 const Landing = () => {
   const [selectedDance, setSelectedDance] = useState<string | undefined>(undefined);
@@ -23,8 +24,11 @@ const Landing = () => {
   const runApp = useDriver();
   const { http } = useHTTP();
 
-  const poseDataMap: Record<string, PoseType[]> = {
-    deadpool,
+  const poseDataMap: Record<string, PoseData> = {
+    deadpool: {
+      poses: deadpool as PoseType[],
+      audio: deadpoolAudio
+    }
   };
 
   const handleStart = async () => {
@@ -35,9 +39,9 @@ const Landing = () => {
     setPoseData(poseDataMap[selectedDance]);
 
     setTimeout(() => {
-      if (poseData && poseData.length > 0) {
-        runApp(); // Call runApp once poseData is updated
+      if (poseData && poseData.poses && poseData.poses.length > 0) {
         navigate("/app");
+        runApp();
       } else {
         toast.error("Pose data is not loaded correctly.");
       }

@@ -1,50 +1,73 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import axios from "axios";
+import { sleep } from "@/utils/functions";
 
 interface HTTPProps {
   url: string;
   method: string;
   body?: object;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleData?: (data: any) => void;
   handleSuccess?: () => void;
   handleError?: (error: unknown) => void;
+  retries?: number; // NEW: number of retry attempts
+  retryDelay?: number; // NEW: delay in ms between retries
 }
 
 const useHTTP = () => {
   const [loading, setLoading] = useState(false);
 
-  const http = async ({ url, method, body, handleData, handleSuccess, handleError }: HTTPProps) => {
+  const http = async ({
+    url,
+    method,
+    body,
+    handleData,
+    handleSuccess,
+    handleError,
+    retries = 2,
+    retryDelay = 500,
+  }: HTTPProps): Promise<boolean> => {
     setLoading(true);
 
-    try {
-      const { data } = await axios({
-        method,
-        headers: { "Content-Type": "application/json" },
-        url: `http://localhost:8000${url}`,
-        data: body,
-      });
+    let attempt = 0;
+    while (attempt <= retries) {
+      try {
+        const { data } = await axios({
+          method,
+          headers: { "Content-Type": "application/json" },
+          url: `http://localhost:8000${url}`,
+          data: body,
+        });
 
-      // console.log(data);
-      if (data.error) throw new Error(data.error);
+        if (data.error) throw new Error(data.error);
 
-      if (handleData) handleData(data);
-      if (handleSuccess) handleSuccess();
+        handleData?.(data);
+        handleSuccess?.();
+        return true;
+      } catch (error) {
+        attempt++;
+        const isLastAttempt = attempt > retries;
 
-      return true;
-    } catch (error) {
-      console.error(error);
-      const message = axios.isAxiosError(error)
-        ? error.response?.data?.error || error.message
-        : "An unexpected error occurred";
-      toast.error(message);
-      if (handleError) handleError(error);
+        console.error(`Attempt ${attempt} failed`, error);
 
-      return false;
-    } finally {
-      setLoading(false);
+        if (isLastAttempt) {
+          const message = axios.isAxiosError(error)
+            ? error.response?.data?.error || error.message
+            : "An unexpected error occurred";
+          toast.error(message);
+          handleError?.(error);
+          return false;
+        }
+
+        // Wait before next retry
+        await sleep(retryDelay);
+      } finally {
+        if (attempt > retries) setLoading(false);
+      }
     }
+
+    setLoading(false);
+    return false;
   };
 
   return { http, loading };

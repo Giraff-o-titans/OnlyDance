@@ -93,14 +93,18 @@ export function useCameraCapture() {
         }
 
         const timestamp = ((now - startTime.current) / 1000).toFixed(3);
-        setUserPose((prev: PoseType[]) => [
-          ...prev,
-          {
-            frame: frameCounter.current++,
-            timestamp: parseFloat(timestamp),
-            landmarks: data,
-          },
-        ]);
+        setUserPose((prev: PoseType[]) => {
+          const updated = [
+            ...prev,
+            {
+              frame: frameCounter.current++,
+              timestamp: parseFloat(timestamp),
+              landmarks: data,
+            },
+          ];
+          console.log(updated);
+          return updated;
+        });
       }
 
       if (!collectRef.current) {

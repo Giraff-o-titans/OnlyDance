@@ -166,8 +166,8 @@ def find_weights(pose_data):
         to_joint = rel_vec[1]
 
         for i in range(1, len(pose_data)):
-            first_normed_rel_vec = find_normalized_relative_vec(from_joint, to_joint, i-1)
-            second_normed_rel_vec = find_normalized_relative_vec(from_joint, to_joint, i)
+            first_normed_rel_vec = find_normalized_relative_vec_from_obj(from_joint, to_joint, pose_data[i-1])
+            second_normed_rel_vec = find_normalized_relative_vec(from_joint, to_joint, pose_data[i])
             diff_norm = np.linalg.norm(np.array(second_normed_rel_vec) - np.array(first_normed_rel_vec))
             diffs.append(diff_norm)
 
