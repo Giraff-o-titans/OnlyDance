@@ -37,6 +37,21 @@ def score(request: ScoreRequest):
     
     return {"score": np.random.uniform() * 100}
 
+REL_VEC_TUPS = (
+        ("LEFT_WRIST", "LEFT_ELBOW"),
+        ("LEFT_ELBOW", "LEFT_SHOULDER"),
+        ("LEFT_SHOULDER", "RIGHT_SHOULDER"),
+        ("RIGHT_WRIST", "RIGHT_ELBOW"),
+        ("RIGHT_ELBOW", "RIGHT_SHOULDER"),
+        ("LEFT_SHOULDER", "LEFT_HIP"),
+        ("RIGHT_SHOULDER", "RIGHT_HIP"),
+        ("LEFT_HIP", "RIGHT_HIP"),
+        ("LEFT_HIP", "LEFT_KNEE"),
+        ("LEFT_KNEE", "LEFT_ANKLE"),
+        ("RIGHT_HIP", "RIGHT_KNEE"),
+        ("RIGHT_KNEE", "RIGHT_ANKLE")
+    )
+
 def lin_interpolate_frames(frame1, frame2, timestamp):
     output = {}
     output["timestamp"] = timestamp
@@ -143,20 +158,6 @@ def find_normalized_relative_vec(from_landmark, to_landmark, frame, pose_data):
     return [relative_vec[0] / relative_vec_norm, relative_vec[1] / relative_vec_norm,relative_vec[2] / relative_vec_norm]
 
 def find_weights(pose_data):
-    REL_VEC_TUPS = (
-        ("LEFT_WRIST", "LEFT_ELBOW"),
-        ("LEFT_ELBOW", "LEFT_SHOULDER"),
-        ("LEFT_SHOULDER", "RIGHT_SHOULDER"),
-        ("RIGHT_WRIST", "RIGHT_ELBOW"),
-        ("RIGHT_ELBOW", "RIGHT_SHOULDER"),
-        ("LEFT_SHOULDER", "LEFT_HIP"),
-        ("RIGHT_SHOULDER", "RIGHT_HIP"),
-        ("LEFT_HIP", "RIGHT_HIP"),
-        ("LEFT_HIP", "LEFT_KNEE"),
-        ("LEFT_KNEE", "LEFT_ANKLE"),
-        ("RIGHT_HIP", "RIGHT_KNEE"),
-        ("RIGHT_KNEE", "RIGHT_ANKLE")
-    )
     weights = []
     for rel_vec in REL_VEC_TUPS:
         diffs = []
@@ -173,3 +174,92 @@ def find_weights(pose_data):
         weights.append(sum(diffs))
     return weights
 
+
+#weights = find_weights(pose_data)
+
+def calculate_vectors(expected, actual):
+
+    exp_and_actual_vec = {}
+
+    for key in REL_VEC_TUPS:
+        expected_vector = (np.array(expected[key[0]]) - np.array(expected[key[1]]))
+        actual_vector = (np.array(actual[key[0]]) - np.array(actual[key[1]]))
+        exp_and_actual_vec[key] = [(expected_vector, actual_vector)]
+
+    return exp_and_actual_vec
+
+#calculate_vectors(pose_data[0]['landmarks'], pose_data[100]['landmarks'])
+
+# expected_frames: list of dictionaries of lists
+
+def calculate_norm(expected_frames, actual_frames, weights):
+
+    total = np.array([])
+
+    for i in range(len(expected_frames)):
+        vectors = calculate_vectors(expected_frames[i], actual_frames[i])
+
+        list_of_diffs = np.array([])
+
+        for num, key in enumerate(REL_VEC_TUPS):
+            vector1 = vectors[key][0][0]
+            vector2 = vectors[key][0][1]
+            cosine_similarity = np.dot(vector1, vector2) / (np.linalg.norm(vector1) * np.linalg.norm(vector2))
+            list_of_diffs = np.append(list_of_diffs, (cosine_similarity + 1)/2 * weights[num])
+
+        avg = list_of_diffs.sum() / len(list_of_diffs)
+        total = np.append(total, avg)
+
+    return sum(total) / len(total)
+
+"""export type PoseType = {
+  frame: number;
+  timestamp: number;
+  landmarks: Record<string, number[]>;
+};"""
+
+# Expected Movements: PoseTypeObject List of length fpb
+# Actual Movements: PoseTypeObject List of length fbp * 4
+# Output: dictionary with list of lists of lists
+
+def softmax(x):
+    e_x = np.exp(x - np.max(x))  # Shift values for numerical stability
+    return e_x / e_x.sum(axis=0, keepdims=True)
+
+def calculate_grade_for_groups(expected_movements, actual_movements):
+    
+    weights = [softmax(x) for x in find_weights(expected_movements)]
+    grade_per_timestamp_group = {}
+
+    for i in range(len(expected_movements), len(actual_movements)):
+        rang = (i-len(expected_movements), i)
+        interpolated_data = fill_values(expected_movements, actual_movements[rang[0]:rang[1]])
+        needed_expected_movements = [data['landmarks'] for data in interpolated_data[0]]
+        needed_actual_movements = [data['landmarks'] for data in interpolated_data[1]]
+        grade = calculate_norm(needed_expected_movements, needed_actual_movements, weights)
+        grade_per_timestamp_group[rang] = grade
+
+    return grade_per_timestamp_group
+
+### SCORE FUNCTION
+
+def calculate_highest_grade(expected_movements, actual_movements):
+
+    return max(list(calculate_grade_for_groups(expected_movements, actual_movements).values()))
+
+#calculate_highest_grade(pose_data[0:12], pose_data[0:48])
+
+
+### INPUT FUNCTION FOR BRYAN'S RECOMMENDATION LLM FUNCTION
+
+def calculate_highest_vectors(expected_movements, actual_movements):
+
+    best_range_with_val = max(calculate_grade_for_groups(expected_movements, actual_movements).items(),key = lambda x: x[1])
+    best_range = best_range_with_val[0]
+    desired_actual = actual_movements[best_range[0]:best_range[1]]
+    curr_dict = calculate_vectors(expected_movements[0]['landmarks'], desired_actual[0]['landmarks'])
+    for i in range(1,len(expected_movements)):
+        dct = calculate_vectors(expected_movements[i]['landmarks'], desired_actual[i]['landmarks'])
+        for key, value in dct.items():
+            curr_dict[key].append(value[0])
+    return curr_dict
