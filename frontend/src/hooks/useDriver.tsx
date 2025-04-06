@@ -2,7 +2,6 @@ import { useStore } from "./useStore";
 import { useRef, useEffect } from "react";
 import audio from "../assets/deadpool_audio.mp3";
 import useHTTP from "./useHTTP";
-import { data } from "react-router-dom";
 
 export function useDriver() {
   const BPM = 86.3;
