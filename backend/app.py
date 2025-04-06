@@ -226,7 +226,7 @@ def find_weights(pose_data):
 
         weights.append(sum(diffs))
     # return weights
-    return [0, 0, 0, 0, 0, 0, 0, 0, 0, 200, 0 , 200]
+    return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 , 0]
 
 
 # weights = find_weights(pose_data)
