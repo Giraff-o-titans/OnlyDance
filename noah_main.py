@@ -182,7 +182,7 @@ def calculate_highest_vectors(expected_movements, actual_movements, fpb):
     for i in range(1,len(expected_movements)):
         dct = calculate_vectors(expected_movements[i]['landmarks'], desired_actual[i]['landmarks'])
         for key, value in dct.items():
-            curr_dict[key].append(value)
+            curr_dict[key].append(value[0])
     return curr_dict
 
 #calculate_highest_vectors(pose_data[0:12], pose_data[0:48], 12)
